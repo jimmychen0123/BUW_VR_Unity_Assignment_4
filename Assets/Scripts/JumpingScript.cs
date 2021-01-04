@@ -124,6 +124,7 @@ public class JumpingScript : MonoBehaviour
             UpdateRayVisualization(trigger, 0.00001f);
 
             // YOUR CODE - BEGIN
+            UpdateJumpingPositionPreview();
 
             // YOUR CODE - END    
 
@@ -201,7 +202,20 @@ public class JumpingScript : MonoBehaviour
     }
 
     // YOUR CODE (ADDITIONAL FUNCTIONS)- BEGIN
+    private void UpdateJumpingPositionPreview()
+    {
+        if (rayOnFlag)
+        {
+            jumpingPositionPreview.transform.position = hit.point;
+            jumpingPositionPreview.SetActive(true);
+        }
 
+        else
+        {
+            jumpingPositionPreview.SetActive(false);
+        }
+
+    }//end UpdateJumpingPositionPreview()
     // YOUR CODE - END 
 
     private void ResetXRRig()
