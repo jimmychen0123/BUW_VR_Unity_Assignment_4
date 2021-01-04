@@ -125,8 +125,15 @@ public class JumpingScript : MonoBehaviour
             UpdateRayVisualization(trigger, 0.00001f);
 
             // YOUR CODE - BEGIN
-            UpdateJumpingPositionPreview();
-            UpdateJumpingPersonPreview();
+
+            //mapping: trigger button(index finger)
+            rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.triggerButton, out triggerPressed);
+            UpdateTriggerButton();
+
+
+
+            UpdateJumpingPositionPreviewVisualisation();
+            UpdateJumpingPersonPreviewVisualisation();
             // YOUR CODE - END    
 
             // mapping: secondary button (B)
@@ -146,7 +153,6 @@ public class JumpingScript : MonoBehaviour
     }
 
    
-
     private void UpdateOffsetToCenter()
     {
         // Calculate the offset between the platform center and the camera in the xz plane
@@ -205,25 +211,43 @@ public class JumpingScript : MonoBehaviour
     }
 
     // YOUR CODE (ADDITIONAL FUNCTIONS)- BEGIN
-    private void UpdateJumpingPositionPreview()
+    private void UpdateTriggerButton()
     {
-        if (rayOnFlag)
+        
+        if (triggerPressed)
         {
-            jumpingPositionPreview.transform.position = hit.point;
-            jumpingPositionPreview.SetActive(true);
+            Debug.Log("Trigger button is pressed.");
+            triggerReleased = false;
         }
 
         else
         {
+            triggerReleased = true;
+        }
+    }// end update trigger button
+
+    private void UpdateJumpingPositionPreviewVisualisation()
+    {
+         
+        if (triggerPressed && rayOnFlag)
+        {
+            
+            jumpingPositionPreview.transform.position = hit.point;
+            jumpingPositionPreview.SetActive(true);
+        }
+      
+        else
+        {
+           
             jumpingPositionPreview.SetActive(false);
         }
 
     }//end UpdateJumpingPositionPreview()
 
-    private void UpdateJumpingPersonPreview()
+    private void UpdateJumpingPersonPreviewVisualisation()
     {
         
-        if (rayOnFlag)
+        if (triggerPressed && rayOnFlag)
         {
             jumpingPersonPreview.transform.position = new Vector3 (hit.point.x, hit.point.y + height, hit.point.z);
             jumpingPersonPreview.SetActive(true);
