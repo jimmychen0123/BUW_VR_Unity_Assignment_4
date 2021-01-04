@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR;
@@ -35,7 +36,7 @@ public class JumpingScript : MonoBehaviour
     private RaycastHit hit;
 
     // YOUR CODE (IF NEEDED) - BEGIN 
-
+    private float height = 1.0f;
     // YOUR CODE - END    
 
     // Start is called before the first frame update
@@ -125,7 +126,7 @@ public class JumpingScript : MonoBehaviour
 
             // YOUR CODE - BEGIN
             UpdateJumpingPositionPreview();
-
+            UpdateJumpingPersonPreview();
             // YOUR CODE - END    
 
             // mapping: secondary button (B)
@@ -143,6 +144,8 @@ public class JumpingScript : MonoBehaviour
             secondaryButtonLF = secondaryButton;
         }
     }
+
+   
 
     private void UpdateOffsetToCenter()
     {
@@ -216,6 +219,21 @@ public class JumpingScript : MonoBehaviour
         }
 
     }//end UpdateJumpingPositionPreview()
+
+    private void UpdateJumpingPersonPreview()
+    {
+        
+        if (rayOnFlag)
+        {
+            jumpingPersonPreview.transform.position = new Vector3 (hit.point.x, hit.point.y + height, hit.point.z);
+            jumpingPersonPreview.SetActive(true);
+        }
+
+        else
+        {
+            jumpingPersonPreview.SetActive(false);
+        }
+    }
     // YOUR CODE - END 
 
     private void ResetXRRig()
