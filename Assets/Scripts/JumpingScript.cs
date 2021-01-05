@@ -250,6 +250,7 @@ public class JumpingScript : MonoBehaviour
         if (triggerPressed && rayOnFlag)
         {
             jumpingPersonPreview.transform.position = new Vector3 (hit.point.x, hit.point.y + height, hit.point.z);
+            jumpingPersonPreview.transform.rotation = rightHandController.transform.rotation;
             jumpingPersonPreview.SetActive(true);
         }
 
