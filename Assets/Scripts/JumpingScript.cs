@@ -37,6 +37,7 @@ public class JumpingScript : MonoBehaviour
 
     // YOUR CODE (IF NEEDED) - BEGIN 
     private float height = 1.0f;
+
     // YOUR CODE - END    
 
     // Start is called before the first frame update
@@ -128,12 +129,15 @@ public class JumpingScript : MonoBehaviour
 
             //mapping: trigger button(index finger)
             rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.triggerButton, out triggerPressed);
+
+            //check if the trigger button is fully pressed 
             UpdateTriggerButton();
-
-
-
+            //show the geomettries when fully pressed the trigger button
             UpdateJumpingPositionPreviewVisualisation();
             UpdateJumpingPersonPreviewVisualisation();
+
+            //teleport the user 
+            //UpdateUserPosition();
             // YOUR CODE - END    
 
             // mapping: secondary button (B)
@@ -152,7 +156,8 @@ public class JumpingScript : MonoBehaviour
         }
     }
 
-   
+    
+
     private void UpdateOffsetToCenter()
     {
         // Calculate the offset between the platform center and the camera in the xz plane
@@ -239,7 +244,7 @@ public class JumpingScript : MonoBehaviour
         else
         {
            
-            jumpingPositionPreview.SetActive(false);
+            //jumpingPositionPreview.SetActive(false);
         }
 
     }//end UpdateJumpingPositionPreview()
@@ -250,14 +255,28 @@ public class JumpingScript : MonoBehaviour
         if (triggerPressed && rayOnFlag)
         {
             jumpingPersonPreview.transform.position = new Vector3 (hit.point.x, hit.point.y + height, hit.point.z);
-            jumpingPersonPreview.transform.rotation = rightHandController.transform.rotation;
+            
             jumpingPersonPreview.SetActive(true);
         }
 
-        else
+        if(rayOnFlag)
         {
-            jumpingPersonPreview.SetActive(false);
+            jumpingPersonPreview.transform.rotation = rightHandController.transform.rotation;
+            //jumpingPersonPreview.SetActive(false);
         }
+    }// end jumping person preview
+
+    private void UpdateUserPosition()
+    {
+        if (triggerReleased && rightRayIntersectionSphere.activeSelf) 
+        {
+            gameObject.transform.position = hit.point;
+        }
+            
+                
+             
+
+
     }
     // YOUR CODE - END 
 
