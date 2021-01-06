@@ -126,9 +126,10 @@ public class JumpingScript : MonoBehaviour
             UpdateRayVisualization(trigger, 0.00001f);
 
             // YOUR CODE - BEGIN
+            //before teleporting, check if the trigger button is fully pressed 
             if (rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.triggerButton, out triggerPressed)
                 &&
-                triggerPressed && rightRayIntersectionSphere.activeSelf)
+                triggerPressed)
             {
                 //https://gamedevbeginner.com/coroutines-in-unity-when-and-how-to-use-them/
                 StartCoroutine(Teleport());
@@ -214,7 +215,8 @@ public class JumpingScript : MonoBehaviour
     IEnumerator Teleport()
     {
         //store jumping location while preview is not yet activated
-        while (!jumpingPositionPreview.activeSelf)
+        //and the postion is located(intersection)
+        while (!jumpingPositionPreview.activeSelf && rightRayIntersectionSphere.activeSelf )
         {
             //this allows to store the jumping location while user slightly presss the trigger for ray intersection
             setJumpingPosition();
@@ -228,10 +230,11 @@ public class JumpingScript : MonoBehaviour
         //update the avatars direction
         while (rayOnFlag)
         {
-
-            jumpingPersonPreview.transform.rotation = rightHandController.transform.rotation;
             //store the avatars direction before releasing the trigger button
             rotTowardsHit = rightHandController.transform.rotation;
+            jumpingPersonPreview.transform.rotation = rotTowardsHit;
+            
+            
             //https://docs.unity3d.com/ScriptReference/WaitUntil.html
             yield return new WaitUntil(() => !triggerPressed);
         }
@@ -246,25 +249,11 @@ public class JumpingScript : MonoBehaviour
 
     private void setJumpingPosition()
     {
-
+        
         jumpingTargetPosition = hit.point;
 
     }// end setJumpingPosition()
 
-    private void UpdateTriggerButton()
-    {
-        
-        if (triggerPressed)
-        {
-            Debug.Log("Trigger button is pressed.");
-            triggerReleased = false;
-        }
-
-        else
-        {
-            triggerReleased = true;
-        }
-    }// end update trigger button
 
     private void setJumpingPositionPersonPreview()
     {
@@ -282,6 +271,7 @@ public class JumpingScript : MonoBehaviour
 
     private void UpdateUserPositionDirection()
     {
+
         gameObject.transform.position = jumpingTargetPosition;
         gameObject.transform.rotation = rotTowardsHit;
     }
