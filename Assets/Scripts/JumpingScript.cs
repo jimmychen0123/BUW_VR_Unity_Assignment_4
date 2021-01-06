@@ -237,6 +237,8 @@ public class JumpingScript : MonoBehaviour
             
             //https://docs.unity3d.com/ScriptReference/WaitUntil.html
             yield return new WaitUntil(() => !triggerPressed);
+
+            //while fully press the trigger button, if there is no ray intersection, user would not be teleported but facing the ray direction 
         }
 
         UpdateUserPositionDirection();
