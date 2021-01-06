@@ -130,20 +130,9 @@ public class JumpingScript : MonoBehaviour
                 &&
                 triggerPressed && rightRayIntersectionSphere.activeSelf)
             {
-
+                //https://gamedevbeginner.com/coroutines-in-unity-when-and-how-to-use-them/
                 StartCoroutine(Teleport());
             }//end if trigger button pressed
-            //set jumping target to the current intersection point when fully pressing the trigger button
-            //setJumpingPosition();
-
-             
-            //UpdateTriggerButton();
-            //set the geomettries when fully pressed the trigger button
-            //setJumpingPositionPersonPreview();
-            //UpdateJumpingPersonPreviewVisualisation();
-
-            //teleport the user 
-            //UpdateUserPosition();
             // YOUR CODE - END    
 
             // mapping: secondary button (B)
@@ -224,19 +213,26 @@ public class JumpingScript : MonoBehaviour
     
     IEnumerator Teleport()
     {
+        //store jumping location while preview is not yet activated
         while (!jumpingPositionPreview.activeSelf)
         {
+            //this allows to store the jumping location while user slightly presss the trigger for ray intersection
             setJumpingPosition();
+            //set and activate the preview 
             setJumpingPositionPersonPreview();
+            //what follow yield return will specify how long Unity will wait before continuing
+            //execution will pause and be resumed the following frame
             yield return null;
 
         }
-        
+        //update the avatars direction
         while (rayOnFlag)
         {
 
             jumpingPersonPreview.transform.rotation = rightHandController.transform.rotation;
+            //store the avatars direction before releasing the trigger button
             rotTowardsHit = rightHandController.transform.rotation;
+            //https://docs.unity3d.com/ScriptReference/WaitUntil.html
             yield return new WaitUntil(() => !triggerPressed);
         }
 
@@ -274,6 +270,7 @@ public class JumpingScript : MonoBehaviour
     {
         jumpingPositionPreview.transform.position = jumpingTargetPosition;
         jumpingPositionPreview.SetActive(true);
+        //set the distance from avatar to position preview sphere
         jumpingPersonPreview.transform.position = new Vector3(jumpingTargetPosition.x, jumpingTargetPosition.y + height, jumpingTargetPosition.z);
         jumpingPersonPreview.SetActive(true);
 
