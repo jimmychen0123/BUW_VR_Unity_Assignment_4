@@ -126,15 +126,21 @@ public class JumpingScript : MonoBehaviour
             UpdateRayVisualization(trigger, 0.00001f);
 
             // YOUR CODE - BEGIN
+            if (rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.triggerButton, out triggerPressed)
+                &&
+                triggerPressed && rightRayIntersectionSphere.activeSelf)
+            {
 
-            //mapping: trigger button(index finger)
-            rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.triggerButton, out triggerPressed);
+                StartCoroutine(Teleport());
+            }//end if trigger button pressed
+            //set jumping target to the current intersection point when fully pressing the trigger button
+            //setJumpingPosition();
 
-            //check if the trigger button is fully pressed 
-            UpdateTriggerButton();
-            //show the geomettries when fully pressed the trigger button
-            UpdateJumpingPositionPreviewVisualisation();
-            UpdateJumpingPersonPreviewVisualisation();
+             
+            //UpdateTriggerButton();
+            //set the geomettries when fully pressed the trigger button
+            //setJumpingPositionPersonPreview();
+            //UpdateJumpingPersonPreviewVisualisation();
 
             //teleport the user 
             //UpdateUserPosition();
@@ -157,7 +163,6 @@ public class JumpingScript : MonoBehaviour
     }
 
     
-
     private void UpdateOffsetToCenter()
     {
         // Calculate the offset between the platform center and the camera in the xz plane
@@ -216,6 +221,40 @@ public class JumpingScript : MonoBehaviour
     }
 
     // YOUR CODE (ADDITIONAL FUNCTIONS)- BEGIN
+    
+    IEnumerator Teleport()
+    {
+        while (!jumpingPositionPreview.activeSelf)
+        {
+            setJumpingPosition();
+            setJumpingPositionPersonPreview();
+            yield return null;
+
+        }
+        
+        while (rayOnFlag)
+        {
+
+            jumpingPersonPreview.transform.rotation = rightHandController.transform.rotation;
+            rotTowardsHit = rightHandController.transform.rotation;
+            yield return new WaitUntil(() => !triggerPressed);
+        }
+
+        UpdateUserPositionDirection();
+        jumpingPositionPreview.SetActive(false);
+        jumpingPersonPreview.SetActive(false);
+        
+
+    }
+
+
+    private void setJumpingPosition()
+    {
+
+        jumpingTargetPosition = hit.point;
+
+    }// end setJumpingPosition()
+
     private void UpdateTriggerButton()
     {
         
@@ -231,52 +270,23 @@ public class JumpingScript : MonoBehaviour
         }
     }// end update trigger button
 
-    private void UpdateJumpingPositionPreviewVisualisation()
+    private void setJumpingPositionPersonPreview()
     {
-         
-        if (triggerPressed && rayOnFlag)
-        {
-            
-            jumpingPositionPreview.transform.position = hit.point;
-            jumpingPositionPreview.SetActive(true);
-        }
-      
-        else
-        {
-           
-            //jumpingPositionPreview.SetActive(false);
-        }
+        jumpingPositionPreview.transform.position = jumpingTargetPosition;
+        jumpingPositionPreview.SetActive(true);
+        jumpingPersonPreview.transform.position = new Vector3(jumpingTargetPosition.x, jumpingTargetPosition.y + height, jumpingTargetPosition.z);
+        jumpingPersonPreview.SetActive(true);
+
+
+
 
     }//end UpdateJumpingPositionPreview()
 
-    private void UpdateJumpingPersonPreviewVisualisation()
+
+    private void UpdateUserPositionDirection()
     {
-        
-        if (triggerPressed && rayOnFlag)
-        {
-            jumpingPersonPreview.transform.position = new Vector3 (hit.point.x, hit.point.y + height, hit.point.z);
-            
-            jumpingPersonPreview.SetActive(true);
-        }
-
-        if(rayOnFlag)
-        {
-            jumpingPersonPreview.transform.rotation = rightHandController.transform.rotation;
-            //jumpingPersonPreview.SetActive(false);
-        }
-    }// end jumping person preview
-
-    private void UpdateUserPosition()
-    {
-        if (triggerReleased && rightRayIntersectionSphere.activeSelf) 
-        {
-            gameObject.transform.position = hit.point;
-        }
-            
-                
-             
-
-
+        gameObject.transform.position = jumpingTargetPosition;
+        gameObject.transform.rotation = rotTowardsHit;
     }
     // YOUR CODE - END 
 
