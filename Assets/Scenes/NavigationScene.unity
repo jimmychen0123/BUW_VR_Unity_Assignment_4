@@ -14510,9 +14510,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1987479197}
   - component: {fileID: 1987479196}
+  - component: {fileID: 1987479199}
   - component: {fileID: 1987479198}
   - component: {fileID: 1987479193}
-  - component: {fileID: 1987479199}
   - component: {fileID: 1987479194}
   m_Layer: 0
   m_Name: XR Rig

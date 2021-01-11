@@ -37,6 +37,7 @@ public class JumpingScript : MonoBehaviour
 
     // YOUR CODE (IF NEEDED) - BEGIN 
     private float height = 1.0f;
+    private Vector3 avatarDirection;
 
     // YOUR CODE - END    
 
@@ -231,8 +232,16 @@ public class JumpingScript : MonoBehaviour
         while (rayOnFlag)
         {
             //store the avatars direction before releasing the trigger button
-            rotTowardsHit = rightHandController.transform.rotation;
-            jumpingPersonPreview.transform.rotation = rotTowardsHit;
+            // Determine which direction to rotate towards
+            //https://answers.unity.com/questions/254130/how-do-i-rotate-an-object-towards-a-vector3-point.html
+            //https://docs.unity3d.com/ScriptReference/Quaternion.Slerp.html
+
+            avatarDirection = (rightRayIntersectionSphere.transform.position -jumpingPersonPreview.transform.position).normalized;
+
+            rotTowardsHit.SetLookRotation(avatarDirection);
+
+            
+            jumpingPersonPreview.transform.rotation = Quaternion.Slerp(jumpingPersonPreview.transform.rotation, rotTowardsHit, Time.deltaTime );
             
             
             //https://docs.unity3d.com/ScriptReference/WaitUntil.html

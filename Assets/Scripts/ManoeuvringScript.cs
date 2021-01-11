@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR;
@@ -138,6 +139,12 @@ public class ManoeuvringScript : MonoBehaviour
 
             // YOUR CODE - BEGIN
 
+            //before manoeuvring, check if the grip button is fully pressed 
+            //StartCoroutine(SetManoeuvringIndicator(grip, 1.0f);
+            
+            
+            
+
             // YOUR CODE - END    
 
             // mapping: secondary button (B)
@@ -155,7 +162,9 @@ public class ManoeuvringScript : MonoBehaviour
             secondaryButtonLF = secondaryButton;
         }
     }
+
     
+
     private void UpdateOffsetToCenter()
     {
         // Calculate the offset between the platform center and the camera in the xz plane
@@ -214,6 +223,33 @@ public class ManoeuvringScript : MonoBehaviour
     }
 
     // YOUR CODE (ADDITIONAL FUNCTIONS)- BEGIN
+    IEnumerator SetManoeuvringIndicator(float inputValue, float thredhold)
+    {
+        //store manoeuvring location while preview is not yet activated
+        //and the postion is located(intersection)
+        while (!manoeuvringPositionPreview.activeSelf && rightRayIntersectionSphere.activeSelf)
+        {
+            //this allows to store the manoeuvring location while user slightly presss the trigger for ray intersection
+            StoreManoeuvringPosition();
+            //set and activate the preview 
+            SetManoeuvringPreview();
+            //what follow yield return will specify how long Unity will wait before continuing
+            //execution will pause and be resumed the following frame
+            yield return null;
+
+        }
+        gripPressed = true;
+    }
+
+    private void SetManoeuvringPreview()
+    {
+        throw new NotImplementedException();
+    }
+
+    private void StoreManoeuvringPosition()
+    {
+        throw new NotImplementedException();
+    }
 
     // YOUR CODE - END    
 
