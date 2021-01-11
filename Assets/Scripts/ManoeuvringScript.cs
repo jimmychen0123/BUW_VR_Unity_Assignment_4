@@ -38,6 +38,9 @@ public class ManoeuvringScript : MonoBehaviour
     private RaycastHit hit;
 
     // YOUR CODE (IF NEEDED) - BEGIN 
+    private float height = 1.0f;
+    private Vector3 avatarDirection;
+
 
     // YOUR CODE - END    
 
@@ -139,8 +142,16 @@ public class ManoeuvringScript : MonoBehaviour
 
             // YOUR CODE - BEGIN
 
+            UpdateGripInputStatus();
+            
             //before manoeuvring, check if the grip button is fully pressed 
-            //StartCoroutine(SetManoeuvringIndicator(grip, 1.0f);
+            if(rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.grip, out grip) && grip == 1)
+            {
+
+                StartCoroutine(SetManoeuvringIndicator());
+
+            }
+            
             
             
             
@@ -163,7 +174,22 @@ public class ManoeuvringScript : MonoBehaviour
         }
     }
 
-    
+    private void UpdateGripInputStatus()
+    {
+        float gripValue;
+        if(rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.grip, out gripValue) && gripValue == 1.0f)
+        {
+            gripPressed = true;
+            gripReleased = false;
+        }
+
+        if (rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.grip, out gripValue) && gripValue <  0.005f)
+        {
+            gripReleased = true;
+            gripPressed = false;
+        }
+
+    }
 
     private void UpdateOffsetToCenter()
     {
@@ -223,32 +249,93 @@ public class ManoeuvringScript : MonoBehaviour
     }
 
     // YOUR CODE (ADDITIONAL FUNCTIONS)- BEGIN
-    IEnumerator SetManoeuvringIndicator(float inputValue, float thredhold)
+    IEnumerator SetManoeuvringIndicator()
     {
+        
         //store manoeuvring location while preview is not yet activated
-        //and the postion is located(intersection)
-        while (!manoeuvringPositionPreview.activeSelf && rightRayIntersectionSphere.activeSelf)
+        //and the manoevring postion is located(intersection)
+        while (!manoeuvringCenterPreview.activeSelf && rightRayIntersectionSphere.activeSelf)
         {
             //this allows to store the manoeuvring location while user slightly presss the trigger for ray intersection
-            StoreManoeuvringPosition();
+            StoreManoeuvringCenterPosition();
             //set and activate the preview 
-            SetManoeuvringPreview();
+            SetManoeuvringCenterPreview();
             //what follow yield return will specify how long Unity will wait before continuing
             //execution will pause and be resumed the following frame
             yield return null;
 
         }
-        gripPressed = true;
+
+        //update the target preview
+        while (rayOnFlag)
+        {
+            SetJumpingPosition();
+            SetJumpingPreview();
+            SetPreviewDirection();
+           
+
+            //untill the grip is fully released with threshold given 
+            yield return new WaitUntil(()=> gripReleased);
+        }
+
+        //after grip released
+        UpdateUserPositionDirection();
+        manoeuvringCenterPreview.SetActive(false);
+        manoeuvringPersonPreview.SetActive(false);
+        manoeuvringPositionPreview.SetActive(false);
+
+
     }
 
-    private void SetManoeuvringPreview()
+    private void UpdateUserPositionDirection()
     {
-        throw new NotImplementedException();
+        gameObject.transform.position = manoeuvringTargetPosition;
+        gameObject.transform.rotation = rotTowardsHit;
     }
 
-    private void StoreManoeuvringPosition()
+    private void SetPreviewDirection()
     {
-        throw new NotImplementedException();
+        //store the avatars direction before releasing the trigger button
+        // Determine which direction to rotate towards
+        //https://answers.unity.com/questions/254130/how-do-i-rotate-an-object-towards-a-vector3-point.html
+        //https://docs.unity3d.com/ScriptReference/Quaternion.Slerp.html
+
+        avatarDirection = (manoeuvringCenterPosition - manoeuvringTargetPosition).normalized;
+
+        rotTowardsHit.SetLookRotation(avatarDirection);
+
+
+        manoeuvringPersonPreview.transform.rotation = Quaternion.Slerp(manoeuvringPersonPreview.transform.rotation, rotTowardsHit, Time.deltaTime);
+    }
+
+    private void SetJumpingPreview()
+    {
+        //set the target sephere 
+        manoeuvringPositionPreview.transform.position = manoeuvringTargetPosition;
+        manoeuvringPositionPreview.SetActive(true);
+        //set the avatar with height
+        manoeuvringPersonPreview.transform.position = new Vector3(manoeuvringTargetPosition.x, manoeuvringTargetPosition.y + height, manoeuvringTargetPosition.z);
+        manoeuvringPersonPreview.SetActive(true);
+
+    }
+
+    private void SetJumpingPosition()
+    {
+        manoeuvringTargetPosition = rightRayIntersectionSphere.transform.position;
+        
+    }
+
+    private void SetManoeuvringCenterPreview()
+    {
+        manoeuvringCenterPreview.transform.position = manoeuvringCenterPosition;
+        manoeuvringCenterPreview.SetActive(true);
+        
+    }
+
+    private void StoreManoeuvringCenterPosition()
+    {
+        manoeuvringCenterPosition = rightRayIntersectionSphere.transform.position;
+        
     }
 
     // YOUR CODE - END    
