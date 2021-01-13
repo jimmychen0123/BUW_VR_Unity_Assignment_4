@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR;
@@ -17,7 +19,8 @@ public class Navidget : MonoBehaviour
     private Vector3 startPosition = Vector3.zero;//new Vector3(70.28f, 22.26f, 37.78f);
     private Quaternion startRotation = Quaternion.identity; //Vector3(0,312.894073,0)
 
-    private bool primaryButtonLF = false;
+    //Jimmy: For debug purpose, set to public 
+    public bool primaryButtonLF = false;
     private bool secondaryButtonLF = false;
 
     private LineRenderer rightRayRenderer;
@@ -33,6 +36,14 @@ public class Navidget : MonoBehaviour
 
     private bool animationFlag = false;
     public float animationDuration = 3.0f; // in seconds
+
+    // YOUR CODE (IF NEEDED) - BEGIN 
+    private Vector3 navidgetCenterPosition;
+    private Quaternion rotTowardsNavidgetCenter = Quaternion.identity;
+    private Vector3 cameraDirection;
+
+    // YOUR CODE - END    
+
 
 
     // Start is called before the first frame update
@@ -133,45 +144,62 @@ public class Navidget : MonoBehaviour
             bool primaryButton = false;
             rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.primaryButton, out primaryButton);
             //Debug.Log("primary button: " + primaryButton);
+
+            // YOUR CODE - BEGIN
+            UpdatePrimaryButtonStatus(primaryButton);
+            //Check if the primary button is pressed
+            if (primaryButton)
+            {
+                StartCoroutine(SetNavidget());
+            }
+
             
-            if (primaryButton != primaryButtonLF) // state changed
-            {
-                if (primaryButton) // up (false -> true)
-                {
-                    if (rightHit.collider != null) // something was hit
-                    {
-                        // start target pose specification
-                        
-                        // YOUR CODE - BEGIN
-
-                        // YOUR CODE - END
-                    }
-
-                }
-                else // down (true -> false)
-                {
-                    // YOUR CODE - BEGIN
-
-                    // finish target pose specification and start animation process
 
 
-                    // YOUR CODE - END
-                }
-            }
-            else
-            {
-                if (primaryButton) // high (true -> true)
-                {
-                    // YOUR CODE - BEGIN
+            // YOUR CODE - END
+            //if (primaryButton != primaryButtonLF) // state changed
+            //{
+            //    if (primaryButton) // up (false -> true)
+            //    {
+            //        if (rightHit.collider != null) // something was hit
+            //        {
+            //            // start target pose specification
 
-                    // update target pose (position and orientation) with respect to oint of interest
+            //            // YOUR CODE - BEGIN
+            //            Debug.Log(rightHit.point);
+            //            //visualise the navidget sphere
+            //            navidgetIntersectionSphere.transform.position = rightRayIntersectionSphere.transform.position;
+            //            navidgetIntersectionSphere.SetActive(true);
 
 
-                    // YOUR CODE - END
-                }
-            }
+            //            // YOUR CODE - END
+            //        }
 
-            primaryButtonLF = primaryButton;
+            //    }
+            //    else // down (true -> false)
+            //    {
+            //        // YOUR CODE - BEGIN
+
+            //        // finish target pose specification and start animation process
+
+
+            //        // YOUR CODE - END
+            //    }
+            //}
+            //else
+            //{
+            //    if (primaryButton) // high (true -> true)
+            //    {
+            //        // YOUR CODE - BEGIN
+
+            //        // update target pose (position and orientation) with respect to oint of interest
+
+
+            //        // YOUR CODE - END
+            //    }
+            //}
+
+            //primaryButtonLF = primaryButton;
 
             // ----------------- Reset stuff -----------------
 
@@ -193,6 +221,108 @@ public class Navidget : MonoBehaviour
 
             animateXRRig();
         }
+    }
+
+    private void UpdatePrimaryButtonStatus(bool primaryButton)
+    {
+        
+        if (rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.primaryButton, out primaryButton) && primaryButton)
+        {
+            primaryButtonLF = true;
+
+        }
+
+        else
+        {
+            primaryButtonLF = false;
+        }
+    }
+
+    IEnumerator SetNavidget()
+    {
+        //store navidget location while preview is not yet activated
+        //and set the navidget sphere preview
+        while (rightHit.collider != null && !navidgetIntersectionSphere.activeSelf)
+        {
+            //this allows store the navidget location while user presses the button A
+            StoreNavidgetPosition();
+            //set and activate the preview 
+            SetNavidgetSpherePreview();
+            //what follow yield return will specify how long Unity will wait before continuing
+            //execution will pause and be resumed the following frame
+            yield return null;
+        }
+
+        //Set cylinder preview with its view direction
+        //Set camera preview and store absolute target pose
+        while (navidgetIntersectionSphere.activeSelf)
+        {
+            SetNavidgetStickPose();
+
+            if (rightHit.collider.name == navidgetIntersectionSphere.GetComponent<SphereCollider>().name)
+            {
+                Debug.Log("On surface");
+                //store the avatars direction before releasing the trigger button
+                // Determine which direction to rotate towards
+                //https://answers.unity.com/questions/254130/how-do-i-rotate-an-object-towards-a-vector3-point.html
+                //https://docs.unity3d.com/ScriptReference/Quaternion.Slerp.html
+                
+
+                cameraDirection = (rightRayIntersectionSphere.transform.position - navidgetCenterPosition).normalized;
+
+                rotTowardsNavidgetCenter.SetLookRotation(cameraDirection);
+
+
+                navidgetDirectionStick.transform.rotation = Quaternion.Slerp(navidgetDirectionStick.transform.rotation, rotTowardsNavidgetCenter, Time.deltaTime);
+                //navidgetIntersectionSphere.transform.rotation = Quaternion.Slerp(navidgetIntersectionSphere.transform.rotation, rotTowardsNavidgetCenter, Time.deltaTime);
+            }
+            else
+            {
+                Debug.Log("Not On surface");
+            }
+            
+            //untill the button A is fully released 
+            yield return new WaitUntil(() => primaryButtonLF);
+
+        }
+
+        //set the animation
+        
+    }
+
+    private void SetNavidgetStickPose()
+    {
+        //set the hierarchy 
+        navidgetDirectionStick.transform.SetParent(navidgetIntersectionSphere.transform);
+        navidgetPreviewPose.transform.SetParent(navidgetDirectionStick.transform);
+        //set stick
+        navidgetDirectionStick.transform.position = rightRayIntersectionSphere.transform.position;
+        //navidgetDirectionStick.transform.localPosition = new Vector3(0.0f, navidgetIntersectionSphere.GetComponent<SphereCollider>().radius, 0.0f);
+
+        navidgetDirectionStick.transform.localScale = new Vector3(0.02f, navidgetIntersectionSphere.GetComponent<SphereCollider>().radius, 0.02f);
+
+        navidgetDirectionStick.SetActive(true);
+
+        //set camera pose
+        navidgetPreviewPose.transform.localPosition = new Vector3(0.0f, navidgetIntersectionSphere.GetComponent<SphereCollider>().radius * 2, 0.0f); 
+
+
+        navidgetPreviewPose.transform.localScale = new Vector3(2.0f, 0.25f, 2.0f);
+
+        navidgetPreviewPose.SetActive(true);
+    }
+
+    private void SetNavidgetSpherePreview()
+    {
+        navidgetIntersectionSphere.transform.position = navidgetCenterPosition;
+        navidgetIntersectionSphere.SetActive(true);
+
+       
+    }
+
+    private void StoreNavidgetPosition()
+    {
+        navidgetCenterPosition = rightRayIntersectionSphere.transform.position;
     }
 
     // Update is called once per frame
