@@ -14633,10 +14633,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   translationFactor: 3
   rotationFactor: 60
+  primaryButtonLF: 0
   myLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295
   animationDuration: 3
+  cameraOffset: {fileID: 0}
 --- !u!114 &1987479196
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15128,7 +15130,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &2101431090
 Transform:
   m_ObjectHideFlags: 0

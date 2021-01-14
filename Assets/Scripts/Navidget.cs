@@ -39,8 +39,8 @@ public class Navidget : MonoBehaviour
 
     // YOUR CODE (IF NEEDED) - BEGIN 
     private Vector3 navidgetCenterPosition;
-    private Quaternion rotTowardsNavidgetCenter = Quaternion.identity;
-    private Vector3 cameraDirection;
+    
+    public GameObject cameraOffset;
 
     // YOUR CODE - END    
 
@@ -54,7 +54,7 @@ public class Navidget : MonoBehaviour
 
         mainCamera = GameObject.Find("Main Camera");
         rightHandController = GameObject.Find("RightHand Controller");
-
+       
         if (rightHandController != null) // guard
         {
             rightXRController = rightHandController.GetComponent<XRController>();
@@ -153,10 +153,9 @@ public class Navidget : MonoBehaviour
                 StartCoroutine(SetNavidget());
             }
 
-            
-
-
+          
             // YOUR CODE - END
+
             //if (primaryButton != primaryButtonLF) // state changed
             //{
             //    if (primaryButton) // up (false -> true)
@@ -166,10 +165,6 @@ public class Navidget : MonoBehaviour
             //            // start target pose specification
 
             //            // YOUR CODE - BEGIN
-            //            Debug.Log(rightHit.point);
-            //            //visualise the navidget sphere
-            //            navidgetIntersectionSphere.transform.position = rightRayIntersectionSphere.transform.position;
-            //            navidgetIntersectionSphere.SetActive(true);
 
 
             //            // YOUR CODE - END
@@ -255,61 +250,93 @@ public class Navidget : MonoBehaviour
 
         //Set cylinder preview with its view direction
         //Set camera preview and store absolute target pose
-        while (navidgetIntersectionSphere.activeSelf)
+        if (rightHit.collider.name == navidgetIntersectionSphere.GetComponent<SphereCollider>().name)
         {
+            Debug.Log("On surface");
             SetNavidgetStickPose();
+        }
+        else
+        {
+            Debug.Log("Not On surface");
+        }
 
-            if (rightHit.collider.name == navidgetIntersectionSphere.GetComponent<SphereCollider>().name)
-            {
-                Debug.Log("On surface");
-                //store the avatars direction before releasing the trigger button
-                // Determine which direction to rotate towards
-                //https://answers.unity.com/questions/254130/how-do-i-rotate-an-object-towards-a-vector3-point.html
-                //https://docs.unity3d.com/ScriptReference/Quaternion.Slerp.html
-                
-
-                cameraDirection = (rightRayIntersectionSphere.transform.position - navidgetCenterPosition).normalized;
-
-                rotTowardsNavidgetCenter.SetLookRotation(cameraDirection);
+        //untill the button A is fully released 
+        yield return new WaitUntil(() => !primaryButtonLF);
 
 
-                navidgetDirectionStick.transform.rotation = Quaternion.Slerp(navidgetDirectionStick.transform.rotation, rotTowardsNavidgetCenter, Time.deltaTime);
-                //navidgetIntersectionSphere.transform.rotation = Quaternion.Slerp(navidgetIntersectionSphere.transform.rotation, rotTowardsNavidgetCenter, Time.deltaTime);
-            }
-            else
-            {
-                Debug.Log("Not On surface");
-            }
+
+        //set the animation
+        //https://gamedevbeginner.com/the-right-way-to-lerp-in-unity-with-examples/
+        var timeElapsed = 0.0f;
+        
+        var currentPos = gameObject.transform.position;
+        var currentRot = gameObject.transform.rotation;
+        
+        var distance = Vector3.Distance(currentPos, mainCamera.transform.position);
+        
+        //offset
+        navidgetPreviewPose.SetActive(false);
+        navidgetPreviewPose.transform.Translate(0, -distance, 0, Space.Self);
+        
+        while (timeElapsed < animationDuration)
+        {
+
             
-            //untill the button A is fully released 
-            yield return new WaitUntil(() => primaryButtonLF);
+            
+            gameObject.transform.position = Vector3.Lerp(currentPos, navidgetPreviewPose.transform.position, timeElapsed / animationDuration);
+
+
+            mainCamera.transform.position = gameObject.transform.position;
+
+            gameObject.transform.rotation = Quaternion.Slerp(currentRot, navidgetPreviewPose.transform.rotation, timeElapsed / animationDuration);
+
+            timeElapsed += Time.deltaTime;
+            
+            yield return null;
 
         }
 
-        //set the animation
+        gameObject.transform.position = navidgetPreviewPose.transform.position;
+        gameObject.transform.rotation = navidgetPreviewPose.transform.rotation;
+
+       
+
+
+        navidgetIntersectionSphere.SetActive(false);
+        navidgetDirectionStick.SetActive(false);
         
+        
+
     }
 
     private void SetNavidgetStickPose()
     {
-        //set the hierarchy 
+        //set the hierarchy of sphere->camera pose-> stick 
+        navidgetPreviewPose.transform.SetParent(navidgetIntersectionSphere.transform);
         navidgetDirectionStick.transform.SetParent(navidgetIntersectionSphere.transform);
-        navidgetPreviewPose.transform.SetParent(navidgetDirectionStick.transform);
-        //set stick
-        navidgetDirectionStick.transform.position = rightRayIntersectionSphere.transform.position;
-        //navidgetDirectionStick.transform.localPosition = new Vector3(0.0f, navidgetIntersectionSphere.GetComponent<SphereCollider>().radius, 0.0f);
 
-        navidgetDirectionStick.transform.localScale = new Vector3(0.02f, navidgetIntersectionSphere.GetComponent<SphereCollider>().radius, 0.02f);
+        
+        navidgetIntersectionSphere.transform.rotation = Matrix4x4.LookAt(rightRayIntersectionSphere.transform.position, navidgetIntersectionSphere.transform.position, Vector3.up).rotation;
+        //set position of camera pose and stick
+        navidgetPreviewPose.transform.localPosition = new Vector3(0.0f, 0.0f, -navidgetIntersectionSphere.GetComponent<SphereCollider>().radius * 2);
+
+        navidgetDirectionStick.transform.localPosition = new Vector3(0.0f, 0.0f, -navidgetIntersectionSphere.GetComponent<SphereCollider>().radius);
+
+        //set rotation of stick
+        //align the axis
+        navidgetDirectionStick.transform.rotation = Quaternion.LookRotation(navidgetIntersectionSphere.transform.up);
+   
+        //set scale of camera pose and stick
+        navidgetPreviewPose.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+        navidgetPreviewPose.SetActive(true);
+        
+
+        
+        navidgetDirectionStick.transform.localScale = new Vector3(0.025f, navidgetIntersectionSphere.GetComponent<SphereCollider>().radius, 0.025f);
 
         navidgetDirectionStick.SetActive(true);
 
-        //set camera pose
-        navidgetPreviewPose.transform.localPosition = new Vector3(0.0f, navidgetIntersectionSphere.GetComponent<SphereCollider>().radius * 2, 0.0f); 
-
-
-        navidgetPreviewPose.transform.localScale = new Vector3(2.0f, 0.25f, 2.0f);
-
-        navidgetPreviewPose.SetActive(true);
+       
     }
 
     private void SetNavidgetSpherePreview()
@@ -357,10 +384,11 @@ public class Navidget : MonoBehaviour
     private void animateXRRig()
     {
         // YOUR CODE - BEGIN
-
         // interpolate position -> Vector3.Lerp()
 
         // interpolate rotation -> Quaternion.Slerp()
+
+        Debug.Log("start animation");
 
         // YOUR CODE - END        
     }
