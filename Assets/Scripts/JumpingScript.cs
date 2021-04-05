@@ -38,12 +38,23 @@ public class JumpingScript : MonoBehaviour
     // YOUR CODE (IF NEEDED) - BEGIN 
     private float height = 1.0f;
     private Vector3 avatarDirection;
+    private Quaternion camLocalRot;
+    private Quaternion platformLocalRot;
+
+    public GameObject simulatedUser;
+    
+    private Vector3 sUjumpingTargetPosition;
+
+    private GameObject sUjumpingPersonPreview = null;
+
+
 
     // YOUR CODE - END    
 
     // Start is called before the first frame update
     void Start()
     {
+        
         startPosition = transform.position;
         startRotation = transform.rotation;
 
@@ -53,6 +64,13 @@ public class JumpingScript : MonoBehaviour
         offsetRenderer = GetComponent<LineRenderer>();
         offsetRenderer.startWidth = 0.01f;
         offsetRenderer.positionCount = 2;
+
+        camLocalRot = mainCamera.transform.localRotation;
+        platformLocalRot = transform.localRotation;
+
+        simulatedUser = GameObject.Find("Simulated User");
+        sUjumpingPersonPreview = simulatedUser.GetComponent<SimulatedUser>().jumpingPersonPreview;
+
 
         if (rightHandController != null) // guard
         {
@@ -166,6 +184,10 @@ public class JumpingScript : MonoBehaviour
         offsetRenderer.SetPosition(0, a); // set pos 1
         offsetRenderer.SetPosition(1, b); // set pos 2
 
+        float goalAngle = rotTowardsHit.eulerAngles.y;
+        float turnAngle = goalAngle - (camLocalRot.eulerAngles.y + platformLocalRot.eulerAngles.y);
+
+
     }
 
     private void UpdateRayVisualization(float inputValue, float threshold)
@@ -223,6 +245,11 @@ public class JumpingScript : MonoBehaviour
             setJumpingPosition();
             //set and activate the preview 
             setJumpingPositionPersonPreview();
+
+            //set second user preview
+            setSUJumpingPositionPersonPreview();
+
+
             //what follow yield return will specify how long Unity will wait before continuing
             //execution will pause and be resumed the following frame
             yield return null;
@@ -257,6 +284,11 @@ public class JumpingScript : MonoBehaviour
 
     }
 
+    private void setSUJumpingPositionPersonPreview()
+    {
+        
+        sUjumpingTargetPosition =  jumpingTargetPosition + transform.InverseTransformPoint(simulatedUser.transform.position);
+    }
 
     private void setJumpingPosition()
     {
@@ -285,6 +317,10 @@ public class JumpingScript : MonoBehaviour
 
         gameObject.transform.position = jumpingTargetPosition - centerOffset;
         gameObject.transform.rotation = rotTowardsHit;
+
+        //second user position and rotation
+        simulatedUser.transform.position = sUjumpingTargetPosition;
+        
     }
     // YOUR CODE - END 
 
