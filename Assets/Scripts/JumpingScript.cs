@@ -283,7 +283,7 @@ public class JumpingScript : MonoBehaviour
     private void UpdateUserPositionDirection()
     {
 
-        gameObject.transform.position = jumpingTargetPosition;
+        gameObject.transform.position = jumpingTargetPosition - centerOffset;
         gameObject.transform.rotation = rotTowardsHit;
     }
     // YOUR CODE - END 
