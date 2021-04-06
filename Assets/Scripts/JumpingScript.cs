@@ -38,14 +38,19 @@ public class JumpingScript : MonoBehaviour
     // YOUR CODE (IF NEEDED) - BEGIN 
     private float height = 1.0f;
     private Vector3 avatarDirection;
+    //fix the rotation offset
     private Quaternion camLocalRot;
     private Quaternion platformLocalRot;
+    private Vector3 goalAngle;
+    private Vector3 turnAngle;
 
     public GameObject simulatedUser;
     
     private Vector3 sUjumpingTargetPosition;
 
     private GameObject sUjumpingPersonPreview = null;
+
+    private Vector3 navRelative;
 
 
 
@@ -70,6 +75,8 @@ public class JumpingScript : MonoBehaviour
 
         simulatedUser = GameObject.Find("Simulated User");
         sUjumpingPersonPreview = simulatedUser.GetComponent<SimulatedUser>().jumpingPersonPreview;
+
+        navRelative = transform.InverseTransformPoint(simulatedUser.transform.position);
 
 
         if (rightHandController != null) // guard
@@ -184,10 +191,6 @@ public class JumpingScript : MonoBehaviour
         offsetRenderer.SetPosition(0, a); // set pos 1
         offsetRenderer.SetPosition(1, b); // set pos 2
 
-        float goalAngle = rotTowardsHit.eulerAngles.y;
-        float turnAngle = goalAngle - (camLocalRot.eulerAngles.y + platformLocalRot.eulerAngles.y);
-
-
     }
 
     private void UpdateRayVisualization(float inputValue, float threshold)
@@ -246,8 +249,14 @@ public class JumpingScript : MonoBehaviour
             //set and activate the preview 
             setJumpingPositionPersonPreview();
 
-            //set second user preview
-            setSUJumpingPositionPersonPreview();
+            //caculate the second user's position relative to navigator
+            
+            Debug.Log("relative position: " + navRelative);
+
+            //set the initial formation
+            sUjumpingPersonPreview.transform.position = jumpingTargetPosition + navRelative;
+            sUjumpingPersonPreview.SetActive(true);
+
 
 
             //what follow yield return will specify how long Unity will wait before continuing
@@ -258,6 +267,8 @@ public class JumpingScript : MonoBehaviour
         //update the avatars direction
         while (rayOnFlag)
         {
+            
+
             //store the avatars direction before releasing the trigger button
             // Determine which direction to rotate towards
             //https://answers.unity.com/questions/254130/how-do-i-rotate-an-object-towards-a-vector3-point.html
@@ -265,12 +276,15 @@ public class JumpingScript : MonoBehaviour
 
             avatarDirection = (rightRayIntersectionSphere.transform.position -jumpingPersonPreview.transform.position).normalized;
 
-            rotTowardsHit.SetLookRotation(avatarDirection);
+            rotTowardsHit = Quaternion.LookRotation(avatarDirection);
 
             
             jumpingPersonPreview.transform.rotation = Quaternion.Slerp(jumpingPersonPreview.transform.rotation, rotTowardsHit, Time.deltaTime );
-            
-            
+
+            //goalAngle = rotTowardsHit.eulerAngles;
+            //turnAngle = camLocalRot.eulerAngles - platformLocalRot.eulerAngles;
+            //Debug.Log("rotTowardsHit: " + goalAngle + "camLocalRot:" + camLocalRot.eulerAngles + "platformLocalRot: " + platformLocalRot.eulerAngles + "turnAngle: " + turnAngle);
+
             //https://docs.unity3d.com/ScriptReference/WaitUntil.html
             yield return new WaitUntil(() => !triggerPressed);
 
@@ -287,7 +301,8 @@ public class JumpingScript : MonoBehaviour
     private void setSUJumpingPositionPersonPreview()
     {
         
-        sUjumpingTargetPosition =  jumpingTargetPosition + transform.InverseTransformPoint(simulatedUser.transform.position);
+       
+        
     }
 
     private void setJumpingPosition()
@@ -316,11 +331,13 @@ public class JumpingScript : MonoBehaviour
     {
 
         gameObject.transform.position = jumpingTargetPosition - centerOffset;
-        gameObject.transform.rotation = rotTowardsHit;
+        // compensate rotation offset (between platform center and HMD/camera)
+        Quaternion offsetRot = transform.rotation * Quaternion.Inverse(mainCamera.transform.rotation);
+        offsetRot = Quaternion.Euler(0.0f, offsetRot.eulerAngles.y, 0.0f); // offset compensation only for YAW rotation
+        transform.rotation = rotTowardsHit * offsetRot;
+        //gameObject.transform.rotation = rotTowardsHit;
+        //transform.Rotate(-turnAngle);
 
-        //second user position and rotation
-        simulatedUser.transform.position = sUjumpingTargetPosition;
-        
     }
     // YOUR CODE - END 
 
