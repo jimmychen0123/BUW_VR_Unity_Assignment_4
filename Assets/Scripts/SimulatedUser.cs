@@ -21,6 +21,7 @@ public class SimulatedUser : MonoBehaviour
         navigator = GameObject.Find("XR Rig");
         // Instantiate an object to the right of the current object
         startPosition = navigator.transform.TransformPoint(Vector3.right * 2);
+
         // Give the avatar height  
         transform.position = new Vector3(startPosition.x, startPosition.y + height, startPosition.z);
 

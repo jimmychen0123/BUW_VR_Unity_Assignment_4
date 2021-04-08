@@ -77,6 +77,7 @@ public class JumpingScript : MonoBehaviour
         sUjumpingPersonPreview = simulatedUser.GetComponent<SimulatedUser>().jumpingPersonPreview;
 
         navRelative = transform.InverseTransformPoint(simulatedUser.transform.position);
+        
 
 
         if (rightHandController != null) // guard
@@ -253,8 +254,7 @@ public class JumpingScript : MonoBehaviour
             
             Debug.Log("relative position: " + navRelative);
 
-            //set the initial formation
-            sUjumpingPersonPreview.transform.position = jumpingTargetPosition + navRelative;
+            
             sUjumpingPersonPreview.SetActive(true);
 
 
@@ -276,14 +276,18 @@ public class JumpingScript : MonoBehaviour
 
             avatarDirection = (rightRayIntersectionSphere.transform.position -jumpingPersonPreview.transform.position).normalized;
 
-            rotTowardsHit = Quaternion.LookRotation(avatarDirection);
-
+            rotTowardsHit = Quaternion.LookRotation(avatarDirection, Vector3.up );
             
+            //only rotate around y axis
+            rotTowardsHit = Quaternion.Euler(0f, rotTowardsHit.eulerAngles.y, 0f);
+
             jumpingPersonPreview.transform.rotation = Quaternion.Slerp(jumpingPersonPreview.transform.rotation, rotTowardsHit, Time.deltaTime );
 
-            //goalAngle = rotTowardsHit.eulerAngles;
-            //turnAngle = camLocalRot.eulerAngles - platformLocalRot.eulerAngles;
-            //Debug.Log("rotTowardsHit: " + goalAngle + "camLocalRot:" + camLocalRot.eulerAngles + "platformLocalRot: " + platformLocalRot.eulerAngles + "turnAngle: " + turnAngle);
+            //set the initial formation
+            //updating the formation with the change of navigator
+            sUjumpingPersonPreview.transform.position = jumpingPersonPreview.transform.TransformPoint(navRelative);
+            sUjumpingPersonPreview.transform.Translate(Vector3.down * height);
+
 
             //https://docs.unity3d.com/ScriptReference/WaitUntil.html
             yield return new WaitUntil(() => !triggerPressed);
