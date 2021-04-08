@@ -53,20 +53,18 @@ public class JumpingScript : MonoBehaviour
     private Vector3 navRelative;
 
     //Joystick threshold
-    public Vector2 threshold;
+    public float threshold;
     private bool formationFlag = false;
     private Vector3 sUavatarDirection;
     private Quaternion sUrotTowardsHit = Quaternion.identity;
-
-
-
+    
 
     // YOUR CODE - END    
 
     // Start is called before the first frame update
     void Start()
     {
-        threshold = new Vector2(0.05f, 0.05f);
+        threshold = 0.0005f;
         startPosition = transform.position;
         startRotation = transform.rotation;
 
@@ -310,21 +308,24 @@ public class JumpingScript : MonoBehaviour
             
             //updating the formation with the change of navigator
             // mapping: joystick
-            //Vector2 joystick;
-            //rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.primary2DAxis, out joystick);
-            //if (rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.primary2DAxis, out joystick))
-            //{
-            //    formationFlag = true;
-            //    float speed = 2.0f;
-            //    speed *= Time.deltaTime;
-            //    sUjumpingPersonPreview.transform.Translate(speed * joystick.x, 0f , speed * joystick.y);
+            Vector2 joystick;
 
-            //}
-            //else
-            //{
-                
-            //}
-            
+            //rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.primary2DAxis, out joystick);
+            if (rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.primary2DAxis, out joystick)
+                && joystick.magnitude > threshold)
+                {
+                    Debug.Log("Joystick: " + joystick.magnitude);
+                    formationFlag = true;
+                    float speed = 2.0f;
+                    speed *= Time.deltaTime;
+                    sUjumpingPersonPreview.transform.Translate(speed * joystick.x, 0f, speed * joystick.y);
+
+                }
+                else
+                {
+
+                }
+
 
 
             //https://docs.unity3d.com/ScriptReference/WaitUntil.html
