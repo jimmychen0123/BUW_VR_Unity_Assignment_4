@@ -52,6 +52,13 @@ public class JumpingScript : MonoBehaviour
 
     private Vector3 navRelative;
 
+    //Joystick threshold
+    public Vector2 threshold;
+    private bool formationFlag = false;
+    private Vector3 sUavatarDirection;
+    private Quaternion sUrotTowardsHit = Quaternion.identity;
+
+
 
 
     // YOUR CODE - END    
@@ -59,7 +66,7 @@ public class JumpingScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        threshold = new Vector2(0.05f, 0.05f);
         startPosition = transform.position;
         startRotation = transform.rotation;
 
@@ -253,8 +260,8 @@ public class JumpingScript : MonoBehaviour
             //caculate the second user's position relative to navigator
             
             Debug.Log("relative position: " + navRelative);
-
-            
+            //sUjumpingPersonPreview.transform.position = jumpingPersonPreview.transform.TransformPoint(navRelative);
+            //sUjumpingPersonPreview.transform.Translate(Vector3.down * height);
             sUjumpingPersonPreview.SetActive(true);
 
 
@@ -284,9 +291,40 @@ public class JumpingScript : MonoBehaviour
             jumpingPersonPreview.transform.rotation = Quaternion.Slerp(jumpingPersonPreview.transform.rotation, rotTowardsHit, Time.deltaTime );
 
             //set the initial formation
+            if (!formationFlag)
+            {
+                
+                sUjumpingPersonPreview.transform.position = jumpingPersonPreview.transform.TransformPoint(navRelative);
+                sUjumpingPersonPreview.transform.Translate(Vector3.down * height);
+
+                sUavatarDirection = (rightRayIntersectionSphere.transform.position - sUjumpingPersonPreview.transform.position).normalized;
+
+                sUrotTowardsHit = Quaternion.LookRotation(sUavatarDirection, Vector3.up);
+
+
+                sUrotTowardsHit = Quaternion.Euler(0f, sUrotTowardsHit.eulerAngles.y, 0f);
+
+                sUjumpingPersonPreview.transform.rotation = Quaternion.Slerp(sUjumpingPersonPreview.transform.rotation, sUrotTowardsHit, Time.deltaTime);
+
+            }
+            
             //updating the formation with the change of navigator
-            sUjumpingPersonPreview.transform.position = jumpingPersonPreview.transform.TransformPoint(navRelative);
-            sUjumpingPersonPreview.transform.Translate(Vector3.down * height);
+            // mapping: joystick
+            //Vector2 joystick;
+            //rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.primary2DAxis, out joystick);
+            //if (rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.primary2DAxis, out joystick))
+            //{
+            //    formationFlag = true;
+            //    float speed = 2.0f;
+            //    speed *= Time.deltaTime;
+            //    sUjumpingPersonPreview.transform.Translate(speed * joystick.x, 0f , speed * joystick.y);
+
+            //}
+            //else
+            //{
+                
+            //}
+            
 
 
             //https://docs.unity3d.com/ScriptReference/WaitUntil.html
