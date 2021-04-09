@@ -46,6 +46,7 @@ public class JumpingScript : MonoBehaviour
     private GameObject sUjumpingPersonPreview = null;
     // sU relative position to navigator
     private Vector3 navRelative;
+    private Vector3 initialNavRelative;
     //Joystick threshold
     public float threshold;
     private bool formationFlag = false;
@@ -70,17 +71,25 @@ public class JumpingScript : MonoBehaviour
         offsetRenderer.startWidth = 0.01f;
         offsetRenderer.positionCount = 2;
 
+        // YOUR CODE (IF NEEDED) - BEGIN 
         //set up for simulated user
         threshold = 0.0005f;
         simulatedUser = GameObject.Find("Simulated User");
         sUjumpingPersonPreview = simulatedUser.GetComponent<SimulatedUser>().jumpingPersonPreview;
-        navRelative = transform.InverseTransformPoint(simulatedUser.transform.position);
+        initialNavRelative = transform.InverseTransformPoint(simulatedUser.transform.position);
+        //offset
+        initialNavRelative = new Vector3(initialNavRelative.x, initialNavRelative.y - height, initialNavRelative.z);
+        
+        navRelative = initialNavRelative;
         //add linerenderer on simulated user's head
         if (simulatedUser != null)
         {
             sUHeadRayRenderer = simulatedUser.transform.Find("AvatarHead").Find("AvatarHMD").gameObject.AddComponent<LineRenderer>();
         }
-        
+
+
+        // YOUR CODE - END    
+
 
 
         if (rightHandController != null) // guard
@@ -241,7 +250,50 @@ public class JumpingScript : MonoBehaviour
     }
 
     // YOUR CODE (ADDITIONAL FUNCTIONS)- BEGIN
-    
+    private void UpdateSURayVisualization(float inputValue, float threshold)
+    {
+        // Visualize ray if input value is bigger than a certain treshhold
+        if (inputValue > threshold && rayOnFlag == false)
+        {
+            rightRayRenderer.enabled = true;
+            rayOnFlag = true;
+        }
+        else if (inputValue < threshold && rayOnFlag)
+        {
+            rightRayRenderer.enabled = false;
+            rayOnFlag = false;
+        }
+
+        // update ray length and intersection point of ray
+        if (rayOnFlag)
+        { // if ray is on
+
+            // Check if something is hit and set hit point
+            if (Physics.Raycast(rightHandController.transform.position,
+                                rightHandController.transform.TransformDirection(Vector3.forward),
+                                out hit, Mathf.Infinity, myLayerMask))
+            {
+                rightRayRenderer.SetPosition(0, rightHandController.transform.position);
+                rightRayRenderer.SetPosition(1, hit.point);
+
+                rightRayIntersectionSphere.SetActive(true);
+                rightRayIntersectionSphere.transform.position = hit.point;
+            }
+            else
+            { // if nothing is hit set ray length to 100
+                rightRayRenderer.SetPosition(0, rightHandController.transform.position);
+                rightRayRenderer.SetPosition(1, rightHandController.transform.position + rightHandController.transform.TransformDirection(Vector3.forward) * 100);
+
+                rightRayIntersectionSphere.SetActive(false);
+            }
+        }
+        else
+        {
+            rightRayIntersectionSphere.SetActive(false);
+        }
+    }
+
+
     IEnumerator Teleport()
     {
         //store jumping location while preview is not yet activated
@@ -255,7 +307,7 @@ public class JumpingScript : MonoBehaviour
 
             //caculate the second user's position relative to navigator
             
-            Debug.Log("relative position: " + navRelative);
+            Debug.Log("initial relative position: " + navRelative);
             //sUjumpingPersonPreview.transform.position = jumpingPersonPreview.transform.TransformPoint(navRelative);
             //sUjumpingPersonPreview.transform.Translate(Vector3.down * height);
             sUjumpingPersonPreview.SetActive(true);
@@ -289,14 +341,15 @@ public class JumpingScript : MonoBehaviour
             //set the initial formation
             if (!formationFlag)
             {
-                
+             
+                //set position
                 sUjumpingPersonPreview.transform.position = jumpingPersonPreview.transform.TransformPoint(navRelative);
-                sUjumpingPersonPreview.transform.Translate(Vector3.down * height);
+                //sUjumpingPersonPreview.transform.Translate(Vector3.down * height);
 
+                //set rotation
                 sUavatarDirection = (rightRayIntersectionSphere.transform.position - sUjumpingPersonPreview.transform.position).normalized;
 
                 sUrotTowardsHit = Quaternion.LookRotation(sUavatarDirection, Vector3.up);
-
 
                 sUrotTowardsHit = Quaternion.Euler(0f, sUrotTowardsHit.eulerAngles.y, 0f);
 
@@ -304,47 +357,72 @@ public class JumpingScript : MonoBehaviour
 
             }
             
-            //updating the formation with the change of navigator
+            //updating the formation with the change of joystick
             // mapping: joystick
             Vector2 joystick;
-
             //rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.primary2DAxis, out joystick);
             if (rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.primary2DAxis, out joystick)
                 && joystick.magnitude > threshold)
-                {
-                    Debug.Log("Joystick: " + joystick.magnitude);
-                    formationFlag = true;
-                    float speed = 2.0f;
-                    speed *= Time.deltaTime;
-                    sUjumpingPersonPreview.transform.Translate(speed * joystick.x, 0f, speed * joystick.y);
+            {
+                Debug.Log("Joystick: " + joystick.magnitude);
+                formationFlag = true;
+                
 
-                }
-                else
-                {
+                float speed = 2.0f;
+                speed *= Time.deltaTime;
 
-                }
+                //set position
+                //x and y value from joystick corresponse to the simulated preview's x and z local coordinate system
+                sUjumpingPersonPreview.transform.Translate(speed * joystick.x, 0f, speed * joystick.y);
+                //
+                //update relative position
+                navRelative = jumpingPersonPreview.transform.InverseTransformPoint(sUjumpingPersonPreview.transform.position);
 
+                //set the rotation
+                sUjumpingPersonPreview.transform.rotation = Quaternion.Euler(0f, mainCamera.transform.rotation.eulerAngles.y, 0f);
 
+            }
+            else
+            { 
+                joystick.x = 0.0f;
+                joystick.y = 0.0f;
+
+                //set the rotation
+                sUavatarDirection = (rightRayIntersectionSphere.transform.position - sUjumpingPersonPreview.transform.position).normalized;
+
+                sUrotTowardsHit = Quaternion.LookRotation(sUavatarDirection, Vector3.up);
+
+                sUrotTowardsHit = Quaternion.Euler(0f, sUrotTowardsHit.eulerAngles.y, 0f);
+
+                sUjumpingPersonPreview.transform.rotation = Quaternion.Slerp(sUjumpingPersonPreview.transform.rotation, sUrotTowardsHit, Time.deltaTime);
+
+            }
 
             //https://docs.unity3d.com/ScriptReference/WaitUntil.html
             yield return new WaitUntil(() => !triggerPressed);
-
             //while fully press the trigger button, if there is no ray intersection, user would not be teleported but facing the ray direction 
         }
 
         UpdateUserPositionDirection();
         jumpingPositionPreview.SetActive(false);
         jumpingPersonPreview.SetActive(false);
+
+        UpdateSUPositionDirection();
         
 
     }
 
-    private void setSUJumpingPositionPersonPreview()
+    private void UpdateSUPositionDirection()
     {
-        
-       
-        
+        //In the real scenario, we need to consider the offset. But not in this case
+        simulatedUser.transform.position = sUjumpingPersonPreview.transform.position;
+        simulatedUser.transform.rotation = sUrotTowardsHit;
+        sUjumpingPersonPreview.SetActive(false);
+        formationFlag = false;
+
     }
+
+
 
     private void setJumpingPosition()
     {
@@ -386,5 +464,10 @@ public class JumpingScript : MonoBehaviour
     {
         transform.position = startPosition;
         transform.rotation = startRotation;
+
+        //YOUR CODE - START
+        simulatedUser.transform.position = transform.position + initialNavRelative;
+        simulatedUser.transform.rotation = transform.rotation;
+        //YOUR CODE - END
     }
 }

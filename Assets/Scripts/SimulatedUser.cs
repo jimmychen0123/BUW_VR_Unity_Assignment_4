@@ -15,15 +15,21 @@ public class SimulatedUser : MonoBehaviour
 
     public GameObject jumpingPersonPreview;
 
+    public Vector3 initialNavRelative;
+    
+
     void Start()
     {
         startRotation = transform.rotation;
         navigator = GameObject.Find("XR Rig");
         // Instantiate an object to the right of the current object
         startPosition = navigator.transform.TransformPoint(Vector3.right * 2);
+        initialNavRelative = navigator.transform.InverseTransformPoint(transform.position);
+        //set the position
+        transform.position = startPosition;
 
-        // Give the avatar height  
-        transform.position = new Vector3(startPosition.x, startPosition.y + height, startPosition.z);
+        // Give the avatar height 
+        transform.Translate(0f, height, 0f);
 
         //initiate the second user's avatar preview
         jumpingPersonPreview = Instantiate(Resources.Load("Prefabs/RealisticAvatar"), startPosition, startRotation) as GameObject;
