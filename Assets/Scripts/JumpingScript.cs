@@ -36,35 +36,30 @@ public class JumpingScript : MonoBehaviour
     private RaycastHit hit;
 
     // YOUR CODE (IF NEEDED) - BEGIN 
+    //height for preview
     private float height = 1.0f;
     private Vector3 avatarDirection;
-    //fix the rotation offset
-    private Quaternion camLocalRot;
-    private Quaternion platformLocalRot;
-    private Vector3 goalAngle;
-    private Vector3 turnAngle;
-
-    public GameObject simulatedUser;
     
+    //simulated user properties
+    public GameObject simulatedUser;
     private Vector3 sUjumpingTargetPosition;
-
     private GameObject sUjumpingPersonPreview = null;
-
+    // sU relative position to navigator
     private Vector3 navRelative;
-
     //Joystick threshold
     public float threshold;
     private bool formationFlag = false;
     private Vector3 sUavatarDirection;
     private Quaternion sUrotTowardsHit = Quaternion.identity;
-    
+
+    private LineRenderer sUHeadRayRenderer;
 
     // YOUR CODE - END    
 
     // Start is called before the first frame update
     void Start()
     {
-        threshold = 0.0005f;
+        
         startPosition = transform.position;
         startRotation = transform.rotation;
 
@@ -75,13 +70,16 @@ public class JumpingScript : MonoBehaviour
         offsetRenderer.startWidth = 0.01f;
         offsetRenderer.positionCount = 2;
 
-        camLocalRot = mainCamera.transform.localRotation;
-        platformLocalRot = transform.localRotation;
-
+        //set up for simulated user
+        threshold = 0.0005f;
         simulatedUser = GameObject.Find("Simulated User");
         sUjumpingPersonPreview = simulatedUser.GetComponent<SimulatedUser>().jumpingPersonPreview;
-
         navRelative = transform.InverseTransformPoint(simulatedUser.transform.position);
+        //add linerenderer on simulated user's head
+        if (simulatedUser != null)
+        {
+            sUHeadRayRenderer = simulatedUser.transform.Find("AvatarHead").Find("AvatarHMD").gameObject.AddComponent<LineRenderer>();
+        }
         
 
 
