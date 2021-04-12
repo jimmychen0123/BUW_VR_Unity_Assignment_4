@@ -58,6 +58,11 @@ public class JumpingScript : MonoBehaviour
     private GameObject sURayIntersectionSphere = null;
     
 
+    private Color blue = Color.blue;
+    private Color red = Color.red;
+
+
+
     // YOUR CODE - END    
 
     // Start is called before the first frame update
@@ -94,7 +99,8 @@ public class JumpingScript : MonoBehaviour
             sUHeadRayRenderer.positionCount = 2;
 
             sUHeadRayRenderer.material = new Material(Shader.Find("Sprites/Default"));
-            sUHeadRayRenderer.SetColors(Color.red, Color.red);
+            sUHeadRayRenderer.startColor = red;
+            sUHeadRayRenderer.endColor = red;
 
             // geometry for intersection visualization
             sURayIntersectionSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -151,10 +157,12 @@ public class JumpingScript : MonoBehaviour
             // YOUR CODE (IF NEEDED) - BEGIN 
             //set the color for navigator ray renderer
             rightRayRenderer.material = new Material(Shader.Find("Sprites/Default"));
-            rightRayRenderer.SetColors(Color.blue, Color.blue);
+            rightRayRenderer.startColor = blue;
+            rightRayRenderer.endColor = blue;
 
             offsetRenderer.material = new Material(Shader.Find("Sprites/Default"));
-            offsetRenderer.SetColors(Color.blue, Color.blue);
+            offsetRenderer.startColor = blue;
+            offsetRenderer.endColor = blue;
 
             // YOUR CODE - END    
 
@@ -184,12 +192,12 @@ public class JumpingScript : MonoBehaviour
             float trigger = 0.0f;
             rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.trigger, out trigger);
 
-            UpdateRayVisualization(trigger, 0.00001f);
-            
 
+            UpdateRayVisualization(trigger, 0.00001f);
+            UpdateSURayVisualization(triggerPressed);
 
             // YOUR CODE - BEGIN
-            
+
             //before teleporting, check if the trigger button is fully pressed 
             if (rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.triggerButton, out triggerPressed)
                 &&
@@ -197,7 +205,7 @@ public class JumpingScript : MonoBehaviour
             {
                 //https://gamedevbeginner.com/coroutines-in-unity-when-and-how-to-use-them/
                 StartCoroutine(Teleport());
-                UpdateSURayVisualization(triggerPressed);
+                
             }//end if trigger button pressed
             // YOUR CODE - END    
 
@@ -284,7 +292,7 @@ public class JumpingScript : MonoBehaviour
         if (triggerPressed)
         { // if button is fully pressed
             sUHeadRayRenderer.enabled = true;
-            sURayIntersectionSphere.SetActive(true);
+            
             // Check if something is hit and set hit point
             //if (Physics.Raycast(rightHandController.transform.position,
             //                    rightHandController.transform.TransformDirection(Vector3.forward),
@@ -297,15 +305,16 @@ public class JumpingScript : MonoBehaviour
             
             sUHeadRayRenderer.SetPosition(1, sUjumpingTargetPosition);
 
-                //rightRayIntersectionSphere.SetActive(true);
-                //rightRayIntersectionSphere.transform.position = hit.point;
+            //rightRayIntersectionSphere.SetActive(true);
+            sURayIntersectionSphere.SetActive(true);
+            sURayIntersectionSphere.transform.position = sUjumpingTargetPosition;
             //}
             //else
             //{ // if nothing is hit set ray length to 100
-                //rightRayRenderer.SetPosition(0, rightHandController.transform.position);
-                //rightRayRenderer.SetPosition(1, rightHandController.transform.position + rightHandController.transform.TransformDirection(Vector3.forward) * 100);
+            //rightRayRenderer.SetPosition(0, rightHandController.transform.position);
+            //rightRayRenderer.SetPosition(1, rightHandController.transform.position + rightHandController.transform.TransformDirection(Vector3.forward) * 100);
 
-                //rightRayIntersectionSphere.SetActive(false);
+            //rightRayIntersectionSphere.SetActive(false);
             //}
         }
         else
@@ -492,6 +501,7 @@ public class JumpingScript : MonoBehaviour
 
         //YOUR CODE - START
         simulatedUser.transform.position = transform.position + initialNavRelative;
+        simulatedUser.transform.Translate(0f, height,0f);
         simulatedUser.transform.rotation = transform.rotation;
         //YOUR CODE - END
     }
