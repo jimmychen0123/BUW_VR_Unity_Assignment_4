@@ -43,6 +43,7 @@ public class JumpingScript : MonoBehaviour
     //simulated user properties
     public GameObject simulatedUser;
     private Vector3 sUjumpingTargetPosition;
+    private GameObject sUAvatarHMD;
     private GameObject sUjumpingPersonPreview = null;
     // sU relative position to navigator
     private Vector3 navRelative;
@@ -54,7 +55,8 @@ public class JumpingScript : MonoBehaviour
     private Quaternion sUrotTowardsHit = Quaternion.identity;
 
     private LineRenderer sUHeadRayRenderer;
-    private GameObject sUAvatarHMD;
+    private GameObject sURayIntersectionSphere = null;
+    
 
     // YOUR CODE - END    
 
@@ -92,7 +94,16 @@ public class JumpingScript : MonoBehaviour
             sUHeadRayRenderer.positionCount = 2;
 
             sUHeadRayRenderer.material = new Material(Shader.Find("Sprites/Default"));
-            sUHeadRayRenderer.SetColors(Color.white, Color.red);
+            sUHeadRayRenderer.SetColors(Color.red, Color.red);
+
+            // geometry for intersection visualization
+            sURayIntersectionSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            sURayIntersectionSphere.name = "Simulated User Ray Intersection Sphere";
+            sURayIntersectionSphere.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
+            sURayIntersectionSphere.GetComponent<MeshRenderer>().material.color = Color.red;
+            sURayIntersectionSphere.GetComponent<SphereCollider>().enabled = false; // disable for picking ?!
+            sURayIntersectionSphere.SetActive(false); // hide
+
         }
 
         // YOUR CODE - END    
@@ -174,8 +185,11 @@ public class JumpingScript : MonoBehaviour
             rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.trigger, out trigger);
 
             UpdateRayVisualization(trigger, 0.00001f);
+            
+
 
             // YOUR CODE - BEGIN
+            
             //before teleporting, check if the trigger button is fully pressed 
             if (rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.triggerButton, out triggerPressed)
                 &&
@@ -183,6 +197,7 @@ public class JumpingScript : MonoBehaviour
             {
                 //https://gamedevbeginner.com/coroutines-in-unity-when-and-how-to-use-them/
                 StartCoroutine(Teleport());
+                UpdateSURayVisualization(triggerPressed);
             }//end if trigger button pressed
             // YOUR CODE - END    
 
@@ -261,25 +276,26 @@ public class JumpingScript : MonoBehaviour
     }
 
     // YOUR CODE (ADDITIONAL FUNCTIONS)- BEGIN
-    private void UpdateSURayVisualization()
+    private void UpdateSURayVisualization(bool triggerPressed)
     {
         
 
         // update ray length and intersection point of ray
-        if (rayOnFlag)
-        { // if ray is on
+        if (triggerPressed)
+        { // if button is fully pressed
             sUHeadRayRenderer.enabled = true;
+            sURayIntersectionSphere.SetActive(true);
             // Check if something is hit and set hit point
             //if (Physics.Raycast(rightHandController.transform.position,
             //                    rightHandController.transform.TransformDirection(Vector3.forward),
             //                    out hit, Mathf.Infinity, myLayerMask))
             //{
-                sUHeadRayRenderer.SetPosition(0, sUAvatarHMD.transform.position);
+            sUHeadRayRenderer.SetPosition(0, sUAvatarHMD.transform.position);
             sUjumpingTargetPosition = new Vector3(sUjumpingPersonPreview.transform.position.x,
-                sUjumpingPersonPreview.transform.position.y - height,
-                sUjumpingPersonPreview.transform.position.z);
+                                                  sUjumpingPersonPreview.transform.position.y - height,
+                                                  sUjumpingPersonPreview.transform.position.z);
             
-                sUHeadRayRenderer.SetPosition(1, sUjumpingTargetPosition);
+            sUHeadRayRenderer.SetPosition(1, sUjumpingTargetPosition);
 
                 //rightRayIntersectionSphere.SetActive(true);
                 //rightRayIntersectionSphere.transform.position = hit.point;
@@ -294,8 +310,8 @@ public class JumpingScript : MonoBehaviour
         }
         else
         {
-            sUHeadRayRenderer.enabled = true;
-            //rightRayIntersectionSphere.SetActive(false);
+            sUHeadRayRenderer.enabled = false;
+            sURayIntersectionSphere.SetActive(false);
         }
     }
 
@@ -404,7 +420,7 @@ public class JumpingScript : MonoBehaviour
 
             }
 
-            UpdateSURayVisualization();
+            
 
             //https://docs.unity3d.com/ScriptReference/WaitUntil.html
             yield return new WaitUntil(() => !triggerPressed);
@@ -416,6 +432,7 @@ public class JumpingScript : MonoBehaviour
         jumpingPersonPreview.SetActive(false);
 
         UpdateSUPositionDirection();
+       
         
 
     }
