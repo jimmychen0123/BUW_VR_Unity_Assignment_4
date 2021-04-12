@@ -54,6 +54,7 @@ public class JumpingScript : MonoBehaviour
     private Quaternion sUrotTowardsHit = Quaternion.identity;
 
     private LineRenderer sUHeadRayRenderer;
+    private GameObject sUAvatarHMD;
 
     // YOUR CODE - END    
 
@@ -72,6 +73,7 @@ public class JumpingScript : MonoBehaviour
         offsetRenderer.positionCount = 2;
 
         // YOUR CODE (IF NEEDED) - BEGIN 
+        
         //set up for simulated user
         threshold = 0.0005f;
         simulatedUser = GameObject.Find("Simulated User");
@@ -84,13 +86,16 @@ public class JumpingScript : MonoBehaviour
         //add linerenderer on simulated user's head
         if (simulatedUser != null)
         {
-            sUHeadRayRenderer = simulatedUser.transform.Find("AvatarHead").Find("AvatarHMD").gameObject.AddComponent<LineRenderer>();
+            sUAvatarHMD = simulatedUser.transform.Find("AvatarHead").Find("AvatarHMD").gameObject;
+            sUHeadRayRenderer = sUAvatarHMD.AddComponent<LineRenderer>();
+            sUHeadRayRenderer.startWidth = 0.01f;
+            sUHeadRayRenderer.positionCount = 2;
+
+            sUHeadRayRenderer.material = new Material(Shader.Find("Sprites/Default"));
+            sUHeadRayRenderer.SetColors(Color.white, Color.red);
         }
 
-
         // YOUR CODE - END    
-
-
 
         if (rightHandController != null) // guard
         {
@@ -133,6 +138,12 @@ public class JumpingScript : MonoBehaviour
             jumpingPersonPreview.SetActive(false);
 
             // YOUR CODE (IF NEEDED) - BEGIN 
+            //set the color for navigator ray renderer
+            rightRayRenderer.material = new Material(Shader.Find("Sprites/Default"));
+            rightRayRenderer.SetColors(Color.blue, Color.blue);
+
+            offsetRenderer.material = new Material(Shader.Find("Sprites/Default"));
+            offsetRenderer.SetColors(Color.blue, Color.blue);
 
             // YOUR CODE - END    
 
@@ -250,46 +261,41 @@ public class JumpingScript : MonoBehaviour
     }
 
     // YOUR CODE (ADDITIONAL FUNCTIONS)- BEGIN
-    private void UpdateSURayVisualization(float inputValue, float threshold)
+    private void UpdateSURayVisualization()
     {
-        // Visualize ray if input value is bigger than a certain treshhold
-        if (inputValue > threshold && rayOnFlag == false)
-        {
-            rightRayRenderer.enabled = true;
-            rayOnFlag = true;
-        }
-        else if (inputValue < threshold && rayOnFlag)
-        {
-            rightRayRenderer.enabled = false;
-            rayOnFlag = false;
-        }
+        
 
         // update ray length and intersection point of ray
         if (rayOnFlag)
         { // if ray is on
-
+            sUHeadRayRenderer.enabled = true;
             // Check if something is hit and set hit point
-            if (Physics.Raycast(rightHandController.transform.position,
-                                rightHandController.transform.TransformDirection(Vector3.forward),
-                                out hit, Mathf.Infinity, myLayerMask))
-            {
-                rightRayRenderer.SetPosition(0, rightHandController.transform.position);
-                rightRayRenderer.SetPosition(1, hit.point);
+            //if (Physics.Raycast(rightHandController.transform.position,
+            //                    rightHandController.transform.TransformDirection(Vector3.forward),
+            //                    out hit, Mathf.Infinity, myLayerMask))
+            //{
+                sUHeadRayRenderer.SetPosition(0, sUAvatarHMD.transform.position);
+            sUjumpingTargetPosition = new Vector3(sUjumpingPersonPreview.transform.position.x,
+                sUjumpingPersonPreview.transform.position.y - height,
+                sUjumpingPersonPreview.transform.position.z);
+            
+                sUHeadRayRenderer.SetPosition(1, sUjumpingTargetPosition);
 
-                rightRayIntersectionSphere.SetActive(true);
-                rightRayIntersectionSphere.transform.position = hit.point;
-            }
-            else
-            { // if nothing is hit set ray length to 100
-                rightRayRenderer.SetPosition(0, rightHandController.transform.position);
-                rightRayRenderer.SetPosition(1, rightHandController.transform.position + rightHandController.transform.TransformDirection(Vector3.forward) * 100);
+                //rightRayIntersectionSphere.SetActive(true);
+                //rightRayIntersectionSphere.transform.position = hit.point;
+            //}
+            //else
+            //{ // if nothing is hit set ray length to 100
+                //rightRayRenderer.SetPosition(0, rightHandController.transform.position);
+                //rightRayRenderer.SetPosition(1, rightHandController.transform.position + rightHandController.transform.TransformDirection(Vector3.forward) * 100);
 
-                rightRayIntersectionSphere.SetActive(false);
-            }
+                //rightRayIntersectionSphere.SetActive(false);
+            //}
         }
         else
         {
-            rightRayIntersectionSphere.SetActive(false);
+            sUHeadRayRenderer.enabled = true;
+            //rightRayIntersectionSphere.SetActive(false);
         }
     }
 
@@ -360,7 +366,7 @@ public class JumpingScript : MonoBehaviour
             //updating the formation with the change of joystick
             // mapping: joystick
             Vector2 joystick;
-            //rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.primary2DAxis, out joystick);
+            rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.primary2DAxis, out joystick);
             if (rightXRController.inputDevice.TryGetFeatureValue(CommonUsages.primary2DAxis, out joystick)
                 && joystick.magnitude > threshold)
             {
@@ -397,6 +403,8 @@ public class JumpingScript : MonoBehaviour
                 sUjumpingPersonPreview.transform.rotation = Quaternion.Slerp(sUjumpingPersonPreview.transform.rotation, sUrotTowardsHit, Time.deltaTime);
 
             }
+
+            UpdateSURayVisualization();
 
             //https://docs.unity3d.com/ScriptReference/WaitUntil.html
             yield return new WaitUntil(() => !triggerPressed);
