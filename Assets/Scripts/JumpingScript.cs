@@ -61,6 +61,8 @@ public class JumpingScript : MonoBehaviour
     private Color blue = Color.blue;
     private Color red = Color.red;
 
+    private RaycastHit sUHMDRayhit;
+
 
 
     // YOUR CODE - END    
@@ -294,10 +296,7 @@ public class JumpingScript : MonoBehaviour
             sUHeadRayRenderer.enabled = true;
             
             // Check if something is hit and set hit point
-            //if (Physics.Raycast(rightHandController.transform.position,
-            //                    rightHandController.transform.TransformDirection(Vector3.forward),
-            //                    out hit, Mathf.Infinity, myLayerMask))
-            //{
+            
             sUHeadRayRenderer.SetPosition(0, sUAvatarHMD.transform.position);
             sUjumpingTargetPosition = new Vector3(sUjumpingPersonPreview.transform.position.x,
                                                   sUjumpingPersonPreview.transform.position.y - height,
@@ -308,7 +307,13 @@ public class JumpingScript : MonoBehaviour
             //rightRayIntersectionSphere.SetActive(true);
             sURayIntersectionSphere.SetActive(true);
             sURayIntersectionSphere.transform.position = sUjumpingTargetPosition;
-            //}
+
+            if (Physics.Raycast(sUAvatarHMD.transform.position,
+                                sUjumpingTargetPosition - sUAvatarHMD.transform.position,
+                               out sUHMDRayhit, Mathf.Infinity, myLayerMask))
+            {
+                Debug.Log("hit:" + sUHMDRayhit.collider);
+            }
             //else
             //{ // if nothing is hit set ray length to 100
             //rightRayRenderer.SetPosition(0, rightHandController.transform.position);
