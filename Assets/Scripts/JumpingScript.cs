@@ -56,14 +56,15 @@ public class JumpingScript : MonoBehaviour
 
     private LineRenderer sUHeadRayRenderer;
     private GameObject sURayIntersectionSphere = null;
-    
-
+ 
     private Color blue = Color.blue;
     private Color red = Color.red;
 
     private RaycastHit sUHMDRayhit;
 
+    public GameObject hide;
 
+    public LayerMask sUHMDRayLayerMask;
 
     // YOUR CODE - END    
 
@@ -310,22 +311,31 @@ public class JumpingScript : MonoBehaviour
 
             if (Physics.Raycast(sUAvatarHMD.transform.position,
                                 sUjumpingTargetPosition - sUAvatarHMD.transform.position,
-                               out sUHMDRayhit, Mathf.Infinity, myLayerMask))
+                               out sUHMDRayhit, Mathf.Infinity, sUHMDRayLayerMask))
             {
                 Debug.Log("hit:" + sUHMDRayhit.collider);
-            }
-            //else
-            //{ // if nothing is hit set ray length to 100
-            //rightRayRenderer.SetPosition(0, rightHandController.transform.position);
-            //rightRayRenderer.SetPosition(1, rightHandController.transform.position + rightHandController.transform.TransformDirection(Vector3.forward) * 100);
+                hide = sUHMDRayhit.collider.gameObject;
+                sUHMDRayhit.collider.gameObject.GetComponent<MeshRenderer>().enabled = false;
 
-            //rightRayIntersectionSphere.SetActive(false);
-            //}
+            }
+            else
+            { // if nothing is hit set ray length to 100
+
+                if(hide != null)
+                {
+                    hide.GetComponent<MeshRenderer>().enabled = true;
+                }
+            }
         }
         else
         {
             sUHeadRayRenderer.enabled = false;
             sURayIntersectionSphere.SetActive(false);
+
+            if(hide != null)
+            {
+                hide.GetComponent<MeshRenderer>().enabled = true;
+            }
         }
     }
 
@@ -348,8 +358,6 @@ public class JumpingScript : MonoBehaviour
             //sUjumpingPersonPreview.transform.Translate(Vector3.down * height);
             sUjumpingPersonPreview.SetActive(true);
 
-
-
             //what follow yield return will specify how long Unity will wait before continuing
             //execution will pause and be resumed the following frame
             yield return null;
@@ -359,7 +367,6 @@ public class JumpingScript : MonoBehaviour
         while (rayOnFlag)
         {
             
-
             //store the avatars direction before releasing the trigger button
             // Determine which direction to rotate towards
             //https://answers.unity.com/questions/254130/how-do-i-rotate-an-object-towards-a-vector3-point.html
@@ -434,8 +441,6 @@ public class JumpingScript : MonoBehaviour
 
             }
 
-            
-
             //https://docs.unity3d.com/ScriptReference/WaitUntil.html
             yield return new WaitUntil(() => !triggerPressed);
             //while fully press the trigger button, if there is no ray intersection, user would not be teleported but facing the ray direction 
@@ -447,8 +452,6 @@ public class JumpingScript : MonoBehaviour
 
         UpdateSUPositionDirection();
        
-        
-
     }
 
     private void UpdateSUPositionDirection()
@@ -461,16 +464,12 @@ public class JumpingScript : MonoBehaviour
 
     }
 
-
-
     private void setJumpingPosition()
     {
         
         jumpingTargetPosition = hit.point;
 
     }// end setJumpingPosition()
-
-
     private void setJumpingPositionPersonPreview()
     {
         jumpingPositionPreview.transform.position = jumpingTargetPosition;
@@ -479,11 +478,7 @@ public class JumpingScript : MonoBehaviour
         jumpingPersonPreview.transform.position = new Vector3(jumpingTargetPosition.x, jumpingTargetPosition.y + height, jumpingTargetPosition.z);
         jumpingPersonPreview.SetActive(true);
 
-
-
-
     }//end UpdateJumpingPositionPreview()
-
 
     private void UpdateUserPositionDirection()
     {

@@ -3011,7 +3011,6 @@ MonoBehaviour:
   height: 1
   jumpingPersonPreview: {fileID: 4644237689796218374, guid: 9ac38e79b5db03042994062576ef42ae,
     type: 3}
-  initialNavRelative: {x: 0, y: 0, z: 0}
 --- !u!1001 &381027585
 PrefabInstance:
   m_ObjectHideFlags: 0
