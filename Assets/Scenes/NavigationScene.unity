@@ -14782,6 +14782,10 @@ MonoBehaviour:
     m_Bits: 275
   simulatedUser: {fileID: 0}
   threshold: 0
+  hide: {fileID: 0}
+  sUHMDRayLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
 --- !u!114 &1987479199
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -311,12 +311,21 @@ public class JumpingScript : MonoBehaviour
 
             if (Physics.Raycast(sUAvatarHMD.transform.position,
                                 sUjumpingTargetPosition - sUAvatarHMD.transform.position,
-                               out sUHMDRayhit, Mathf.Infinity, sUHMDRayLayerMask))
+                                out sUHMDRayhit, 
+                                Vector3.Distance(sUAvatarHMD.transform.position, sUjumpingTargetPosition),             sUHMDRayLayerMask))    
             {
-                Debug.Log("hit:" + sUHMDRayhit.collider);
-                hide = sUHMDRayhit.collider.gameObject;
-                sUHMDRayhit.collider.gameObject.GetComponent<MeshRenderer>().enabled = false;
+                if (hide != sUHMDRayhit.collider.gameObject && hide != null)
+                {
+                    hide.GetComponent<MeshRenderer>().enabled = true;
+                    hide = null;
+                }
+                else
+                {
+                    Debug.Log("hit:" + sUHMDRayhit.collider);
+                    hide = sUHMDRayhit.collider.gameObject;
+                    sUHMDRayhit.collider.gameObject.GetComponent<MeshRenderer>().enabled = false;
 
+                }
             }
             else
             { // if nothing is hit set ray length to 100
@@ -324,6 +333,7 @@ public class JumpingScript : MonoBehaviour
                 if(hide != null)
                 {
                     hide.GetComponent<MeshRenderer>().enabled = true;
+                    hide = null;
                 }
             }
         }
